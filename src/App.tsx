@@ -1,5 +1,5 @@
 // src/App.tsx
-import "./app.css";
+import "./App.css";
 import React, { useEffect, useMemo, useState } from "react";
 import MindMap from "./components/MindMap";
 import { setStore, getStore, type MapState } from "./store/mindmapStore";

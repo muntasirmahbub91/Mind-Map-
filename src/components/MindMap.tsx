@@ -111,12 +111,12 @@ export default function MindMap({ onSave, onExit }: Props){
     r.onload=()=>{ try{ const obj=JSON.parse(String(r.result)); if(!obj.nodes||!obj.rootId) throw new Error(); setStore(obj); }
       catch{ alert("Invalid mindmap JSON"); } }; r.readAsText(f); e.currentTarget.value=""; };
 
+  // Import indented Markdown: "- item", "  - child", "    - grandchild", etc.
   const importMdClick=()=>mdFileRef.current?.click();
   const onImportMd=(e:React.ChangeEvent<HTMLInputElement>)=>{
     const f=e.target.files?.[0]; if(!f) return; const r=new FileReader();
     r.onload=()=>{ try{ setStore(mdToState(String(r.result||""))); } catch(err:any){ alert("Markdown import failed: "+(err?.message||String(err))); } };
     r.readAsText(f); e.currentTarget.value=""; };
-
   function mdToState(md:string):MapState{
     const lines=md.replace(/\r/g,"").split("\n"); const nodes:Record<NodeID,MMNode>={}; const stack:NodeID[]=[]; const roots:NodeID[]=[];
     const bullet=/^\s*(?:[-*+]|\d+\.)\s+(.*)$/; const normIndent=(s:string)=>{ const exp=s.replace(/\t/g,"  "); const m=exp.match(/^(\s*)/)!; return Math.floor((m[1]||"").length/2); };
@@ -143,7 +143,6 @@ export default function MindMap({ onSave, onExit }: Props){
           <button className="btn" onClick={relayout}>Auto layout</button>
         </div>
 
-        {/* Style controls live in toolbar */}
         <div className="toolbar-group">
           <span className="zoom-label">Style</span>
           <label className="style-item">Color
@@ -241,7 +240,7 @@ export default function MindMap({ onSave, onExit }: Props){
                   )}
 
                   {sel && sel!==n.id && (
-                    <g onClick={e=>{ e.stopPropagation(); makeParent(n.id); }} className="cursor-pointer">
+                    <g onClick={e=>{ e.stopPropagation(); makeParent(targetParent=n.id); }} className="cursor-pointer">
                       <rect className="badge-green" x={70} y={-10} width={20} height={20} rx={6} ry={6}/>
                       <text x={80} y={5} textAnchor="middle" fontSize={12} fill="#fff">P</text>
                     </g>

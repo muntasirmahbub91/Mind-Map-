@@ -1,0 +1,79 @@
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap");
+
+/* App frame */
+html, body, #root { height: 100%; margin: 0; }
+body { font-family: "Montserrat", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial; }
+.mm-root {
+  position: fixed; inset: 0; display: flex; flex-direction: column;
+  background: linear-gradient(#f8fafc,#eef2f7);
+}
+
+/* ---------- Fixed top toolbar (buttons with names) ---------- */
+.top-toolbar {
+  position: sticky; top: 0; z-index: 60;
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+  padding: 8px 10px; border-bottom: 1px solid #e5e7eb;
+  background: rgba(255,255,255,.92); backdrop-filter: blur(8px);
+}
+.toolbar-group {
+  display: inline-flex; gap: 6px; align-items: center;
+  background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 6px;
+}
+.btn {
+  appearance: none; border: 1px solid #e5e7eb; background: #fff; color:#0f172a;
+  border-radius: 10px; padding: 6px 10px; font-weight: 600; cursor: pointer;
+}
+.btn:hover { background: #f8fafc; }
+.btn.active { background: #fde68a55; }
+.zoom-label { font-size: 12px; opacity:.75; }
+.zoom-range { width: 160px; }
+
+/* ---------- Style panel (fixed, visible) ---------- */
+.stylebar {
+  position: fixed; top: 68px; left: 10px; z-index: 55;
+  display: inline-flex; align-items: center; gap: 12px;
+  padding: 8px 10px; border: 1px solid #e5e7eb; border-radius: 12px;
+  background: rgba(255,255,255,.95); backdrop-filter: blur(8px);
+  box-shadow: 0 6px 18px rgba(15,23,42,.08);
+}
+.muted { opacity:.75; font-size:12px; }
+.style-item { display:inline-flex; align-items:center; gap:8px; font-size: 13px; }
+.style-item input[type="color"] {
+  width: 28px; height: 24px; padding: 0; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer;
+  background: #fff;
+}
+.style-item select {
+  border: 1px solid #cbd5e1; border-radius: 8px; padding: 4px 8px; font-family: inherit; cursor: pointer;
+}
+
+/* ---------- Canvas (only this pans/zooms) ---------- */
+.canvas { position: relative; flex: 1; }
+.svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+/* ---------- Nodes ---------- */
+.node-wrap { transition: transform .12s; cursor: grab; }
+.node-wrap.dragging { transition: none; cursor: grabbing; }
+.node-card { filter: drop-shadow(0 2px 6px rgba(0,0,0,.15)); }
+.node-card.selected { outline: 3px solid #60a5fa55; }
+.node-text { font-size: 0.9rem; font-weight: 600; fill: #1f2937; font-family: "Montserrat", sans-serif; }
+
+/* Badges */
+.badge { fill: #0f172a; }
+.badge-green { fill: #10b981; }
+
+/* Tips */
+.tip {
+  position: absolute; left: 8px; bottom: 8px; font-size: 11px;
+  background: rgba(255,255,255,.95); backdrop-filter: blur(8px);
+  border: 1px solid #e5e7eb; border-radius: 10px; padding: 8px 12px;
+  box-shadow: 0 6px 18px rgba(15,23,42,.08);
+}
+.tip-title { font-weight: 600; margin-bottom: 4px; }
+.tip-list { margin: 0; padding-left: 1rem; }
+
+/* Edit input */
+.edit-input {
+  width: 100%; height: 36px; border: 1px solid #cbd5e1; border-radius: 8px;
+  padding: 0 12px; font-size: 0.9rem; font-family: "Montserrat", sans-serif; background: #fff;
+}
+.edit-input:focus { outline: none; box-shadow: 0 0 0 3px #bae6fd; }

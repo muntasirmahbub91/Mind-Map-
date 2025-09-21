@@ -1,5 +1,5 @@
 // src/store/mindmapStore.ts
-// LocalStorage-backed store with subscribe/select. No React imports.
+// LocalStorage-backed mind map store. Framework-agnostic.
 
 export type NodeID = string;
 export type NodeShape = "rounded" | "rect" | "ellipse" | "diamond";
@@ -19,19 +19,19 @@ export interface MMEdge {
   id: string;
   source: NodeID;
   target: NodeID;
-  kind: "tree" | "link";
+  kind: "tree" | "link"; // tree edges from parentId; link = cross-link
 }
 
 export interface MapState {
   nodes: Record<NodeID, MMNode>;
-  links: MMEdge[];           // cross-links only; tree edges are implicit
+  links: MMEdge[];       // cross-links only
   rootId: NodeID;
 }
 
 const STORAGE_KEY = "mindmap:v1";
 const VERSION = 1;
 
-// ---------- persistence ----------
+// -------- persistence --------
 function loadInitialState(): MapState | null {
   try {
     const raw = typeof localStorage !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
@@ -52,14 +52,14 @@ function makeDebouncedSaver() {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: VERSION, state }));
       } catch {
-        // ignore quota or privacy mode
+        // ignore quota / private mode
       }
     }, 120);
   };
 }
 const persist = makeDebouncedSaver();
 
-// ---------- store core ----------
+// -------- store core --------
 class Store {
   private state: MapState;
   private listeners = new Set<() => void>();
@@ -74,7 +74,7 @@ class Store {
   subscribe = (cb: () => void) => { this.listeners.add(cb); return () => this.listeners.delete(cb); };
 }
 
-// ---------- helpers ----------
+// -------- helpers / algorithms --------
 export const uid = () => Math.random().toString(36).slice(2, 9);
 
 export const childrenOf = (state: MapState, id: NodeID) =>
@@ -104,10 +104,7 @@ export function computeTreeEdges(state: MapState): MMEdge[] {
   return edges;
 }
 
-/**
- * Simple layered layout. Places nodes by BFS depth (x) and distributes siblings (y).
- * levelGap = horizontal spacing per depth. nodeGap = vertical spacing between siblings.
- */
+/** Simple BFS layered layout. */
 export function autoLayout(state: MapState, levelGap = 220, nodeGap = 90): MapState {
   const root = state.nodes[state.rootId];
   if (!root) return state;
@@ -128,15 +125,13 @@ export function autoLayout(state: MapState, levelGap = 220, nodeGap = 90): MapSt
   levels.forEach((ids, depth) => {
     const total = (ids.length - 1) * nodeGap;
     ids.forEach((nid, i) => {
-      const n = nodes[nid];
-      nodes[nid] = { ...n, x: depth * levelGap, y: -total / 2 + i * nodeGap };
+      nodes[nid] = { ...nodes[nid], x: depth * levelGap, y: -total / 2 + i * nodeGap };
     });
   });
 
   return { ...state, nodes };
 }
 
-// immutable edits
 export function commitEditPure(state: MapState, nodeId: NodeID, text: string): MapState {
   if (!state.nodes[nodeId]) return state;
   return { ...state, nodes: { ...state.nodes, [nodeId]: { ...state.nodes[nodeId], text } } };
@@ -151,26 +146,25 @@ export function commitStylePure(
   return { ...state, nodes: { ...state.nodes, [nodeId]: { ...state.nodes[nodeId], ...patch } } };
 }
 
-// ---------- initial demo ----------
+// -------- initial data --------
 function demoInitial(): MapState {
   const rootId = uid();
   const a = uid(), b = uid(), c = uid();
   const nodes: Record<NodeID, MMNode> = {
-    [rootId]: { id: rootId, text: "Root idea", x: 0, y: 0, color: "#fde68a", shape: "rounded" },
-    [a]: { id: a, text: "First branch",  x: 200, y: -110, parentId: rootId, color: "#bfdbfe", shape: "rounded" },
-    [b]: { id: b, text: "Second branch", x: 200, y:   0,  parentId: rootId, color: "#bbf7d0", shape: "rounded" },
-    [c]: { id: c, text: "Third branch",  x: 200, y: 110,  parentId: rootId, color: "#fecaca", shape: "rounded" },
+    [rootId]: { id: rootId, text: "Exam Plan", x: 0, y: 0, color: "#fde68a", shape: "rounded" },
+    [a]: { id: a, text: "Topics",   x: 200, y: -110, parentId: rootId, color: "#bfdbfe", shape: "rounded" },
+    [b]: { id: b, text: "Schedule", x: 200, y:    0, parentId: rootId, color: "#bbf7d0", shape: "rounded" },
+    [c]: { id: c, text: "Resources",x: 200, y:  110, parentId: rootId, color: "#fecaca", shape: "rounded" },
   };
   return { nodes, links: [], rootId };
 }
 
-// ---------- exported store singletons ----------
+// -------- singleton store + public API --------
 const persisted = typeof window !== "undefined" ? loadInitialState() : null;
 export const mindmapStore = new Store(autoLayout(persisted ?? demoInitial()));
 
-export function getStore() { return mindmapStore.getState(); }
-export function setStore(updater: MapState | ((s: MapState) => MapState)) { mindmapStore.setState(updater); }
+/** For React components: useSyncExternalStore(selector) should call this to subscribe. */
+export const subscribeStore = (cb: () => void) => mindmapStore.subscribe(cb);
 
-// React selector hook lives in the component file via useSyncExternalStore.
-// To keep this file framework-agnostic, expose subscribe only:
-export function subscribeStore(cb: () => void) { return mindmapStore.subscribe(cb); }
+export function getStore(): MapState { return mindmapStore.getState(); }
+export function setStore(updater: MapState | ((s: MapState) => MapState)) { mindmapStore.setState(updater); }
